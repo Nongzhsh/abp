@@ -35,6 +35,17 @@
                 });
         }
 
+        function togglePermissions(radioButton) {
+            if (radioButton.val() == '1') {
+                $('.hidePermissonOnProviderToggle').slideUp();
+                $('.hideTabOnProviderToggle').slideUp();
+            }
+            else {
+                $('.hidePermissonOnProviderToggle').slideDown();
+                $('.hideTabOnProviderToggle').slideDown();
+            }
+        }
+
         this.initDom = function($el) {
             $el.find('.tab-pane').each(function () {
                 var $tab = $(this);
@@ -49,6 +60,18 @@
                     });
                 });
             });
+
+            var radioButton = $('input:radio[name="ShowOnlyProviderPermissonsToggle"]');
+
+            if ($('#ShowOnlyProviderPermissonsLabel').hasClass('active')) {
+                $('.hidePermissonOnProviderToggle').slideUp();
+                $('.hideTabOnProviderToggle').slideUp();
+            }
+
+            radioButton.change(
+                function () {
+                    togglePermissions($(this));
+                });
         };
     };
 })(jQuery);

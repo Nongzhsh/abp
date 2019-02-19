@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Authentication.OAuth.Claims;
+﻿using System;
+using Microsoft.AspNetCore.Authentication.OAuth.Claims;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using ProductManagement;
+using StackExchange.Redis;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Authentication.OAuth;
 using Volo.Abp.AspNetCore.Mvc.Client;
@@ -47,7 +50,11 @@ namespace PublicWebSite.Host
                     options.DefaultScheme = "Cookies";
                     options.DefaultChallengeScheme = "oidc";
                 })
-                .AddCookie("Cookies")
+                .AddCookie("Cookies", options =>
+                {
+                    options.Cookie.Expiration = TimeSpan.FromDays(365);
+                    options.ExpireTimeSpan = TimeSpan.FromDays(365);
+                })
                 .AddOpenIdConnect("oidc", options =>
                 {
                     options.Authority = configuration["AuthServer:Authority"];
@@ -70,12 +77,17 @@ namespace PublicWebSite.Host
             {
                 options.Configuration = configuration["Redis:Configuration"];
             });
+
+            var redis = ConnectionMultiplexer.Connect(configuration["Redis:Configuration"]);
+            context.Services.AddDataProtection()
+                .PersistKeysToStackExchangeRedis(redis, "MsDemo-DataProtection-Keys");
         }
 
         public override void OnApplicationInitialization(ApplicationInitializationContext context)
         {
             var app = context.GetApplicationBuilder();
 
+            app.UseCorrelationId();
             app.UseVirtualFiles();
             app.UseAuthentication();
             app.UseAbpRequestLocalization();

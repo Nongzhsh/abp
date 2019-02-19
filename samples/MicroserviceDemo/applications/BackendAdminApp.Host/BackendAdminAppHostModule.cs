@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Authentication.OAuth.Claims;
+﻿using System;
+using Microsoft.AspNetCore.Authentication.OAuth.Claims;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using ProductManagement;
+using StackExchange.Redis;
 using Swashbuckle.AspNetCore.Swagger;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Authentication.OAuth;
@@ -14,6 +17,8 @@ using Volo.Abp.Identity;
 using Volo.Abp.Identity.Web;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
+using Volo.Abp.PermissionManagement;
+using Volo.Blogging;
 
 namespace BackendAdminApp.Host
 {
@@ -24,6 +29,8 @@ namespace BackendAdminApp.Host
         typeof(AbpHttpClientIdentityModelModule),
         typeof(AbpIdentityHttpApiClientModule),
         typeof(AbpIdentityWebModule),
+        typeof(BloggingApplicationContractsModule),
+        typeof(AbpPermissionManagementHttpApiClientModule),
         typeof(ProductManagementHttpApiClientModule),
         typeof(ProductManagementWebModule),
         typeof(AbpAspNetCoreMvcUiBasicThemeModule)
@@ -44,7 +51,11 @@ namespace BackendAdminApp.Host
                     options.DefaultScheme = "Cookies";
                     options.DefaultChallengeScheme = "oidc";
                 })
-                .AddCookie("Cookies")
+                .AddCookie("Cookies", options =>
+                {
+                    options.Cookie.Expiration = TimeSpan.FromDays(365);
+                    options.ExpireTimeSpan = TimeSpan.FromDays(365);
+                })
                 .AddOpenIdConnect("oidc", options =>
                 {
                     options.Authority = configuration["AuthServer:Authority"];
@@ -74,12 +85,17 @@ namespace BackendAdminApp.Host
             {
                 options.Configuration = configuration["Redis:Configuration"];
             });
+
+            var redis = ConnectionMultiplexer.Connect(configuration["Redis:Configuration"]);
+            context.Services.AddDataProtection()
+                .PersistKeysToStackExchangeRedis(redis, "MsDemo-DataProtection-Keys");
         }
 
         public override void OnApplicationInitialization(ApplicationInitializationContext context)
         {
             var app = context.GetApplicationBuilder();
 
+            app.UseCorrelationId();
             app.UseVirtualFiles();
             app.UseAuthentication();
             app.UseAbpRequestLocalization();

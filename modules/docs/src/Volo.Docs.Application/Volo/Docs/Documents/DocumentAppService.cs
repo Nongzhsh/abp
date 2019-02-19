@@ -95,14 +95,14 @@ namespace Volo.Docs.Documents
                 async () =>
                 {
                     var store = _documentStoreFactory.Create(project.DocumentStoreType);
-                    var document = await store.GetDocument(project, documentName, version);
+                    var document = await store.GetDocumentAsync(project, documentName, version);
 
                     return CreateDocumentWithDetailsDto(project, document);
                 },
                 () => new DistributedCacheEntryOptions
                 {
                     //TODO: Configurable?
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(6),
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2),
                     SlidingExpiration = TimeSpan.FromMinutes(30)
                 }
             );
