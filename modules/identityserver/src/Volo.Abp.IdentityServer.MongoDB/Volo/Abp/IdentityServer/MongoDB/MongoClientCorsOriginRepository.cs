@@ -1,16 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using MongoDB.Driver;
+using MongoDB.Driver.Linq;
+using Volo.Abp.Domain.Repositories.MongoDB;
 using Volo.Abp.IdentityServer.Clients;
+using Volo.Abp.MongoDB;
 
 namespace Volo.Abp.IdentityServer.MongoDB
 {
     public class MongoClientCorsOriginRepository : MongoDbRepository<IAbpIdentityServerMongoDbContext, ClientCorsOrigin>, IClientCorsOriginRepository
     {
-        public MongoApiResourceRepository(IMongoDbContextProvider<IAbpIdentityServerMongoDbContext> dbContextProvider) : base(dbContextProvider)
+        public MongoClientCorsOriginRepository(
+            IMongoDbContextProvider<IAbpIdentityServerMongoDbContext> dbContextProvider)
+            : base(dbContextProvider)
         {
-        }
 
+        }
 
         /// <summary>
         /// Get All Client Cors Origins
@@ -20,6 +26,5 @@ namespace Volo.Abp.IdentityServer.MongoDB
         {
             return await GetMongoQueryable().Select(p => p.Origin).ToListAsync(GetCancellationToken(cancellationToken));
         }
-
     }
 }
